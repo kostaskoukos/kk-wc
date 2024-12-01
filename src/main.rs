@@ -1,16 +1,40 @@
-use std::{fs, process};
+use std::process;
+
+enum CountOptions {
+    Bytes,
+    Chars,
+    Words,
+    Lines,
+}
+
+struct Config {
+    path: String,
+    counts: Vec<CountOptions>,
+}
+
+impl Config {
+    fn new(args: &[String]) -> Option<Config> {
+        Some(Config {
+            path: args.first()?.to_string(),
+            counts: args
+                .iter()
+                .skip(1)
+                .map(|arg| match arg.as_ref() {
+                    "-b" => Some(CountOptions::Bytes),
+                    "-c" => Some(CountOptions::Chars),
+                    "-w" => Some(CountOptions::Words),
+                    "-l" => Some(CountOptions::Lines),
+                    _ => None,
+                })
+                .collect::<Option<Vec<CountOptions>>>()?,
+        })
+    }
+}
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.is_empty() {
+    let config = Config::new(&args).unwrap_or_else(|| {
         eprintln!("Wrong arguments provided");
         process::exit(1);
-    }
-    let path = &args[0];
-    let file = fs::read_to_string(path).unwrap_or_else(|e| {
-        eprintln!("An error occurred while reading the file: {e}");
-        process::exit(1);
     });
-
-    println!("{} {}", file.bytes().len(), path);
 }
